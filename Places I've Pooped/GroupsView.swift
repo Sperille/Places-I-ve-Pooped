@@ -70,11 +70,11 @@ struct GroupsView: View {
                     }
                 }
                 
-                // Group Statistics & Leaderboards
+                // Group Statistics
                 if let groupID = groupsManager.currentGroupID {
                     let groupPins = poopManager.poopPins.filter { $0.groupID == groupID }
                     Section {
-                        VStack(spacing: 20) {
+                        VStack(spacing: 16) {
                             // Statistics Grid
                             LazyVGrid(columns: [
                                 GridItem(.flexible()),
@@ -83,60 +83,16 @@ struct GroupsView: View {
                             ], spacing: 16) {
                                 StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
                                 StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
-                                StatCard(title: "Members", value: "\(groupsManager.members.count)", icon: "person.3.fill")
-                            }
-                            
-                            // Most Popular Location
-                            if let mostPopular = findMostPopularLocation(from: groupPins) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Most Popular Location")
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                    Text(mostPopular)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding()
-                                .background(Color.brown.opacity(0.1))
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.brown.opacity(0.3), lineWidth: 1)
-                                )
-                            }
-                            
-                            // Leaderboards (only if there are group pins)
-                            if !groupPins.isEmpty {
-                                VStack(spacing: 16) {
-                                    // Most Poops This Week
-                                    LeaderboardSection(
-                                        title: "Most Poops This Week",
-                                        entries: calculateMostPoopsThisWeek(from: groupPins),
-                                        icon: "calendar.circle.fill"
-                                    )
-                                    
-                                    // Highest Average Rating
-                                    LeaderboardSection(
-                                        title: "Highest Average Rating",
-                                        entries: calculateHighestAverageRating(from: groupPins),
-                                        icon: "star.circle.fill"
-                                    )
-                                }
+                                StatCard(title: "This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
                             }
                         }
                         .padding()
-                        .background(Color.brown.opacity(0.05))
-                        .cornerRadius(16)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.brown.opacity(0.2), lineWidth: 1)
-                        )
                     } header: {
-                        Text("Group Statistics & Leaderboards")
+                        Text("Group Statistics")
                             .font(.headline)
-                            .foregroundColor(.brown)
+                            .foregroundColor(.white)
                             .textCase(nil)
+                            .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
 
@@ -293,6 +249,7 @@ struct GroupsView: View {
 private struct GroupMemberRowWithFriend: View {
     let member: GroupMember
     let userManager: UserManager
+    @EnvironmentObject private var auth: AuthManager
     @State private var showAddFriendAlert = false
     
     var body: some View {
@@ -313,7 +270,7 @@ private struct GroupMemberRowWithFriend: View {
             
             // Add friend button (only if not already a friend and not yourself)
             if !userManager.friends.contains(where: { $0.id == member.userID }) &&
-               member.userID != userManager.currentUserID {
+               member.userID != auth.currentUserRecordID?.recordName {
                 Button(action: {
                     showAddFriendAlert = true
                 }) {
@@ -387,6 +344,11 @@ private func calculateHighestAverageRating(from pins: [PoopPin]) -> [Leaderboard
             color: .orange
         )
     }
+}
+
+private func calculatePoopsThisWeek(from pins: [PoopPin]) -> Int {
+    let oneWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+    return pins.filter { $0.createdAt >= oneWeekAgo }.count
 }
 
 // MARK: - Supporting Types

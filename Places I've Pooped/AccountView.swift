@@ -107,17 +107,21 @@ struct AccountView: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     } else {
-                        List {
+                        VStack(spacing: 8) {
                             ForEach(myPins) { pin in
                                 NavigationLink { PoopDetailView(poop: pin) } label: {
                                     PoopInlineRow(pin: pin)
                                 }
                                 .buttonStyle(.plain)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        poopManager.deletePoopPin(pin)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
                             }
-                            .onDelete(perform: deletePoop)
                         }
-                        .listStyle(PlainListStyle())
-                        .frame(height: CGFloat(myPins.count * 80 + 20))
                     }
                     
                 }
