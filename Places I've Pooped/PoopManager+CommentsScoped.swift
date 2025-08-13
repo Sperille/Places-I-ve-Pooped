@@ -2,6 +2,14 @@
 //  PoopManager+CommentsScoped.swift
 //  Places I've Pooped
 //
+//  Created by Steven Perille on 8/9/25.
+//
+
+
+//
+//  PoopManager+CommentsScoped.swift
+//  Places I've Pooped
+//
 //  Per-poop comments APIs that DO NOT touch the shared `comments` array.
 //  Used by PoopDetailView to avoid cross-poop bleed.
 //

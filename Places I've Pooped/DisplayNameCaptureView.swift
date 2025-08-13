@@ -6,52 +6,99 @@
 import SwiftUI
 
 struct DisplayNameCaptureView: View {
-    @EnvironmentObject var auth: AuthManager
-    @Environment(\.dismiss) private var dismiss
-
-    @State private var name: String = ""
-
+    @EnvironmentObject private var auth: AuthManager
+    @State private var displayName: String = ""
+    @State private var isSubmitting: Bool = false
+    
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Text("Choose a display name")
-                    .font(.title2.bold())
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text("We didn’t receive your name from Apple. Pick a name to show on your posts.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                TextField("Your name", text: $name)
-                    .textInputAutocapitalization(.words)
-                    .submitLabel(.done)
-                    .padding(12)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+        NavigationView {
+            VStack(spacing: 24) {
 
                 Spacer()
-
-                Button {
-                    Task {
-                        await auth.submitDisplayName(name)
-                        dismiss()
-                    }
-                } label: {
-                    Text("Save")
-                        .frame(maxWidth: .infinity)
+                
+                // Header
+                VStack(spacing: 12) {
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .font(.system(size: 60))
+                        .foregroundColor(.blue)
+                    
+                    Text("Choose Your Display Name")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
+                    
+                    Text("This is how you'll appear to other users in the app")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
-                .buttonStyle(.borderedProminent)
-                .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                
+                // Input field
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Display Name")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    TextField("Enter your name", text: $displayName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .textInputAutocapitalization(.words)
+                        .disableAutocorrection(true)
+                        .onSubmit {
+                            submitName()
+                        }
+                        .toolbar {
+                            ToolbarItemGroup(placement: .keyboard) {
+                                Spacer()
+                                Button("Done") {
+                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                }
+                                .foregroundColor(.secondary)
+                            }
+                        }
+                }
+                .padding(.horizontal, 20)
+                
+                // Submit button
+                Button(action: submitName) {
+                    HStack {
+                        if isSubmitting {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .foregroundColor(.white)
+                        }
+                        Text(isSubmitting ? "Setting Name..." : "Continue")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                }
+                .disabled(displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                .padding(.horizontal, 20)
+                
+                Spacer()
             }
             .padding()
-            .navigationTitle("Welcome")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-        .onAppear {
-            // Pre-fill if auth has something other than default
-            let n = auth.currentUserName.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !n.isEmpty && n != "User" { self.name = n }
+            .navigationBarHidden(true)
         }
     }
+    
+    private func submitName() {
+        let trimmedName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        
+        isSubmitting = true
+        
+        Task { @MainActor in
+            await auth.submitDisplayName(trimmedName)
+            isSubmitting = false
+        }
+    }
+}
+
+#Preview {
+    DisplayNameCaptureView()
+        .environmentObject(AuthManager())
 }

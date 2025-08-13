@@ -1,3 +1,10 @@
+//
+//  PoopManager+Cloudkit.swift
+//  Places I've Pooped
+//
+//  Created by Steven Perille on 8/8/25.
+//
+
 import Foundation
 import CloudKit
 

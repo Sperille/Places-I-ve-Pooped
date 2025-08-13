@@ -1,50 +1,66 @@
+//
+//  PoopPinSummaryView.swift
+//  Places I've Pooped
+//
+//  Styled for Dashboard feed: Name, Location, Comment, Numeric Ratings
+//
+
 import SwiftUI
 
 struct PoopPinSummaryView: View {
     let pin: PoopPin
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(pin.locationDescription)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            // Name
+            Text(pin.userName)
+                .font(.title3)
+                .fontWeight(.semibold)
+                .lineLimit(1)
 
-            if !pin.comment.isEmpty {
-                Text(pin.comment)
+            // Location
+            if !pin.locationDescription.isEmpty {
+                Text(pin.locationDescription)
                     .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 12) {
-                Text("TP: \(pin.tpRating)")
-                Text("Cleanliness: \(pin.cleanliness)")
-                Text("Privacy: \(pin.privacy)")
+            // Comment
+            if !pin.comment.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text(pin.comment)
+                    .font(.body)
             }
-            .font(.caption)
-            .foregroundColor(.secondary)
 
-            Divider()
+            // Ratings (all categories, numeric)
+            VStack(alignment: .leading, spacing: 6) {
+                RatingNumberRow(title: "Toilet Paper", value: pin.tpRating)
+                RatingNumberRow(title: "Cleanliness", value: pin.cleanliness)
+                RatingNumberRow(title: "Privacy", value: pin.privacy)
+                RatingNumberRow(title: "Plumbing", value: pin.plumbing)
+                RatingNumberRow(title: "Overall Vibes", value: pin.overallVibes)
+            }
+            .padding(.top, 4)
         }
-        .padding()
-        .background(Color(.systemGray6))
-        .cornerRadius(10)
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 
-#Preview {
-    PoopPinSummaryView(pin: PoopPin(
-        id: "preview-id",
-        userID: "user123",
-        userName: "Preview User",
-        groupID: "group123",
-        coordinate: .init(latitude: 37.3349, longitude: -122.0090),
-        tpRating: 4,
-        cleanliness: 3,
-        privacy: 5,
-        plumbing: 3,
-        overallVibes: 4,
-        comment: "Nice stall, decent lighting.",
-        userColor: .brown,
-        locationDescription: "Public Library",
-        photoURL: nil,
-        createdAt: Date()
-    ))
+struct RatingNumberRow: View {
+    let title: String
+    let value: Int
+
+    var body: some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text("\(value)")
+                .font(.subheadline)
+                .fontWeight(.medium)
+        }
+    }
 }

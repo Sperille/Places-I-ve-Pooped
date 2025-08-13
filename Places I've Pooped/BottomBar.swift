@@ -1,6 +1,8 @@
 //
 //  BottomBar.swift
-//  Apple Music–style static bottom bar
+//  Places I've Pooped
+//
+//  Created by Steven Perille on 8/8/25.
 //
 
 import SwiftUI
@@ -10,60 +12,38 @@ struct BottomBar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            BottomBarItem(icon: "speedometer", label: "Dashboard",
-                          isSelected: current == .dashboard) { current = .dashboard }
-
-            BottomBarItem(icon: "map.fill", label: "Map",
-                          isSelected: current == .map) { current = .map }
-
-            BottomBarItem(icon: "person.3.fill", label: "Groups",
-                          isSelected: current == .groups) { current = .groups }
-
-            BottomBarItem(icon: "person.2.fill", label: "Friends",
-                          isSelected: current == .friends) { current = .friends }
+            item(.dashboard, icon: "gauge.medium", title: "Dashboard")
+            item(.map,       icon: "map.fill",       title: "Map")
+            item(.groups,    icon: "person.3.fill",  title: "Groups")
+            item(.friends,   icon: "person.2.fill",  title: "Friends")
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(.white.opacity(0.12))
-        )
         .padding(.horizontal, 12)
-        .padding(.bottom, 8)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 26))
+        .overlay(RoundedRectangle(cornerRadius: 26).stroke(.white.opacity(0.12)))
         .shadow(radius: 8, y: 2)
     }
-}
 
-private struct BottomBarItem: View {
-    let icon: String
-    let label: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon).font(.system(size: 16, weight: .semibold))
-                Text(label).font(.system(size: 13, weight: .semibold))
+    @ViewBuilder
+    private func item(_ screen: Screen, icon: String, title: String) -> some View {
+        let selected = current == screen
+        Button { current = screen } label: {
+            VStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 18, weight: .semibold))
+                Text(title).font(.system(size: 11, weight: .semibold))
             }
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .padding(.horizontal, 12)
             .background(
                 Group {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color.white.opacity(0.18))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(.white.opacity(0.25))
-                            )
-                    } else { Color.clear }
+                    if selected {
+                        RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.18))
+                            .overlay(RoundedRectangle(cornerRadius: 16).stroke(.white.opacity(0.25)))
+                    }
                 }
             )
         }
         .buttonStyle(.plain)
-        .foregroundStyle(isSelected ? Color.primary : .secondary)
-        .contentShape(Rectangle())
+        .foregroundStyle(selected ? Color.primary : .secondary)
     }
 }

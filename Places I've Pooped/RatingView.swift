@@ -2,7 +2,7 @@
 //  RatingView.swift
 //  Places I've Pooped
 //
-//  Created by xCodeGPT
+//  Created by Steven Perille on 8/4/25.
 //
 
 import SwiftUI
