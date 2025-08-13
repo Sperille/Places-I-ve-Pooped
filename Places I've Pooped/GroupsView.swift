@@ -83,7 +83,7 @@ struct GroupsView: View {
                     } header: {
                         Text("Group Statistics")
                             .font(.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(.primary)
                             .textCase(nil)
                             .frame(maxWidth: .infinity, alignment: .center)
                     }
