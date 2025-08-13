@@ -9,7 +9,8 @@ import CloudKit
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var auth: AuthManager
-    @Binding var isDarkMode: Bool
+    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @AppStorage("overrideSystemAppearance") private var overrideSystemAppearance: Bool = false
     @StateObject private var notificationManager = NotificationManager()
     
     @State private var newUsername = ""
@@ -22,16 +23,25 @@ struct SettingsView: View {
             List {
                 // App Settings Section
                 Section("App Settings") {
-                    HStack {
-                        Image(systemName: "moon.fill")
-                            .foregroundColor(.purple)
-                        Text("Dark Mode")
-                        Spacer()
-                        Toggle("", isOn: $isDarkMode)
-                            .onChange(of: isDarkMode) { _, _ in
-                                // This will automatically update the app's appearance
-                                // since we're using @AppStorage
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "moon.fill")
+                                .foregroundColor(.purple)
+                            Text("Override System Appearance")
+                            Spacer()
+                            Toggle("", isOn: $overrideSystemAppearance)
+                        }
+                        
+                        if overrideSystemAppearance {
+                            HStack {
+                                Image(systemName: "moon.circle.fill")
+                                    .foregroundColor(.blue)
+                                Text("Dark Mode")
+                                Spacer()
+                                Toggle("", isOn: $isDarkMode)
                             }
+                            .padding(.leading, 20)
+                        }
                     }
                     
                     HStack {

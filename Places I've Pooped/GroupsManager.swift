@@ -460,23 +460,62 @@ final class GroupsManager: ObservableObject {
                 DispatchQueue.main.async { completion(true) }
                 return
             }
-            // Create a new membership record
-            let rec = CKRecord(recordType: "GroupMember")
-            rec["groupID"] = groupID as CKRecordValue
-            rec["userID"] = userID as CKRecordValue
-            rec["userName"] = userName as CKRecordValue
-            rec["name"] = userName as CKRecordValue
-            rec["name_lc"] = userName.lowercased() as CKRecordValue
-            rec["createdAt"] = Date() as CKRecordValue
-            rec["joinedAt"] = Date() as CKRecordValue
             
-            // Use provided color or default
-            let colorHex = userColor != nil ? userColor!.toHex() : Self.defaultMemberColorHex()
-            rec["colorHex"] = colorHex as CKRecordValue
-
-            self?.publicDB.save(rec) { _, _ in
-                DispatchQueue.main.async { completion(true) }
+            // Check if user is already a member with a different userID (Apple login compatibility)
+            self?.findExistingMembershipByEmail(groupID: groupID) { existingUserID in
+                if let existingUserID = existingUserID {
+                    // Update the existing membership with the new userID
+                    let updatePredicate = NSPredicate(format: "groupID == %@ AND userID == %@", groupID, existingUserID)
+                    let updateQuery = CKQuery(recordType: "GroupMember", predicate: updatePredicate)
+                    
+                    self?.publicDB.perform(updateQuery, inZoneWith: nil) { updateRecords, _ in
+                        if let record = updateRecords?.first {
+                            record["userID"] = userID as CKRecordValue
+                            record["userName"] = userName as CKRecordValue
+                            record["name"] = userName as CKRecordValue
+                            record["name_lc"] = userName.lowercased() as CKRecordValue
+                            
+                            self?.publicDB.save(record) { _, _ in
+                                print("✅ Updated existing membership with new userID: \(userID)")
+                                DispatchQueue.main.async { completion(true) }
+                            }
+                        } else {
+                            // Fallback to creating new membership
+                            self?.createNewMembership(groupID: groupID, userID: userID, userName: userName, userColor: userColor, completion: completion)
+                        }
+                    }
+                } else {
+                    // Create a new membership record
+                    self?.createNewMembership(groupID: groupID, userID: userID, userName: userName, userColor: userColor, completion: completion)
+                }
             }
+        }
+    }
+    
+    /// Create a new GroupMember record
+    private func createNewMembership(groupID: String, userID: String, userName: String, userColor: Color? = nil, completion: @escaping (Bool) -> Void) {
+        let rec = CKRecord(recordType: "GroupMember")
+        rec["groupID"] = groupID as CKRecordValue
+        rec["userID"] = userID as CKRecordValue
+        rec["userName"] = userName as CKRecordValue
+        rec["name"] = userName as CKRecordValue
+        rec["name_lc"] = userName.lowercased() as CKRecordValue
+        rec["createdAt"] = Date() as CKRecordValue
+        rec["joinedAt"] = Date() as CKRecordValue
+        
+        // Add email for future compatibility
+        let d = UserDefaults.standard
+        if let email = d.string(forKey: "auth.user.email") ?? d.string(forKey: "auth.apple.email") {
+            rec["userEmail"] = email as CKRecordValue
+        }
+        
+        // Use provided color or default
+        let colorHex = userColor != nil ? userColor!.toHex() : Self.defaultMemberColorHex()
+        rec["colorHex"] = colorHex as CKRecordValue
+
+        publicDB.save(rec) { _, _ in
+            print("✅ Created new membership for userID: \(userID)")
+            DispatchQueue.main.async { completion(true) }
         }
     }
 
@@ -494,6 +533,34 @@ final class GroupsManager: ObservableObject {
         // Fallback (should not happen after login)
         print("⚠️ Warning: No user identifier found, using fallback")
         return (UUID().uuidString, "User")
+    }
+    
+    /// Check if user is already a member of a group by email (for Apple login compatibility)
+    private func findExistingMembershipByEmail(groupID: String, completion: @escaping (String?) -> Void) {
+        let d = UserDefaults.standard
+        guard let userEmail = d.string(forKey: "auth.user.email") ?? d.string(forKey: "auth.apple.email") else {
+            completion(nil)
+            return
+        }
+        
+        // Search for existing membership with this email
+        let predicate = NSPredicate(format: "groupID == %@ AND userEmail == %@", groupID, userEmail)
+        let query = CKQuery(recordType: "GroupMember", predicate: predicate)
+        
+        publicDB.perform(query, inZoneWith: nil) { records, error in
+            if let error = error {
+                print("❌ Error searching for existing membership: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+            
+            if let record = records?.first, let existingUserID = record["userID"] as? String {
+                print("✅ Found existing membership for email \(userEmail) with userID: \(existingUserID)")
+                completion(existingUserID)
+            } else {
+                completion(nil)
+            }
+        }
     }
 
     private static func generateInviteCode() -> String {

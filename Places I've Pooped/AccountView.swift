@@ -107,21 +107,17 @@ struct AccountView: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     } else {
-                        VStack(spacing: 8) {
+                        List {
                             ForEach(myPins) { pin in
                                 NavigationLink { PoopDetailView(poop: pin) } label: {
                                     PoopInlineRow(pin: pin)
                                 }
                                 .buttonStyle(.plain)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        poopManager.deletePoopPin(pin)
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                }
                             }
+                            .onDelete(perform: deletePoop)
                         }
+                        .listStyle(PlainListStyle())
+                        .frame(height: CGFloat(myPins.count * 80 + 20))
                     }
                     
                 }
@@ -153,7 +149,7 @@ struct AccountView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView(isDarkMode: $isDarkMode)
+                SettingsView()
             }
             // Load when user resolves / when they change
             .task(id: auth.currentUserRecordID) {

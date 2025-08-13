@@ -74,19 +74,12 @@ struct GroupsView: View {
                 if let groupID = groupsManager.currentGroupID {
                     let groupPins = poopManager.poopPins.filter { $0.groupID == groupID }
                     Section {
-                        VStack(spacing: 16) {
-                            // Statistics Grid
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 16) {
-                                StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
-                                StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
-                                StatCard(title: "This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
-                            }
+                        HStack(spacing: 12) {
+                            StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
+                            StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
+                            StatCard(title: "Poops This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
                         }
-                        .padding()
+                        .padding(.horizontal)
                     } header: {
                         Text("Group Statistics")
                             .font(.headline)
@@ -362,22 +355,21 @@ private struct StatCard: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(.brown)
+            
             Text(value)
-                .font(.title3)
+                .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.brown)
+                .foregroundColor(.primary)
+            
             Text(title)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color.brown.opacity(0.1))
+        .background(Color(.systemGray6))
         .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.brown.opacity(0.3), lineWidth: 1)
-        )
     }
 }
 

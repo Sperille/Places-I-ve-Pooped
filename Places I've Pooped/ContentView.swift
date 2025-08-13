@@ -26,7 +26,7 @@ struct ContentView: View {
                 switch sheet {
                 case .logPoop:   LogPoopView()
                 case .account:   AccountView()
-                case .settings:  SettingsView(isDarkMode: .constant(false))
+                case .settings:  SettingsView()
                 }
             }
             .safeAreaInset(edge: .bottom) {
@@ -48,7 +48,7 @@ struct ContentView: View {
         case .groups:    GroupsView()
         case .friends:   AddFriendView()
         case .account:   AccountView()
-        case .settings:  SettingsView(isDarkMode: .constant(false))
+        case .settings:  SettingsView()
         }
     }
 }
