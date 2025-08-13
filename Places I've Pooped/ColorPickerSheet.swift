@@ -10,159 +10,84 @@ struct ColorPickerSheet: View {
     let onColorSelected: (Color) -> Void
     @Environment(\.dismiss) private var dismiss
     
-    @State private var hue: Double = 0.0
-    @State private var saturation: Double = 1.0
-    @State private var brightness: Double = 1.0
-    
     var body: some View {
         NavigationView {
-            VStack(spacing: 24) {
-                Text("Choose Your Color")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .padding(.top)
-                
-                // Current color preview
-                VStack(spacing: 8) {
-                    Text("Current Color")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    
-                    Circle()
-                        .fill(selectedColor)
-                        .frame(width: 80, height: 80)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.primary.opacity(0.2), lineWidth: 2)
-                        )
-                }
-                
-                // Color wheel
+            VStack(spacing: 0) {
+                // Header
                 VStack(spacing: 16) {
-                    Text("Color Wheel")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
+                    Text("Choose Your Color")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .padding(.top)
                     
-                    ZStack {
-                        // Color wheel background
-                        Circle()
-                            .fill(
-                                AngularGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.red, Color.orange, Color.yellow, Color.green,
-                                        Color.blue, Color.purple, Color.pink, Color.red
-                                    ]),
-                                    center: .center
-                                )
-                            )
-                            .frame(width: 200, height: 200)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.primary.opacity(0.2), lineWidth: 2)
-                            )
-                        
-                        // Brightness overlay
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.white.opacity(1 - brightness),
-                                        Color.clear
-                                    ]),
-                                    center: .center,
-                                    startRadius: 0,
-                                    endRadius: 100
-                                )
-                            )
-                            .frame(width: 200, height: 200)
-                        
-                        // Selection indicator
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 20, height: 20)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.black, lineWidth: 2)
-                            )
-                            .position(
-                                x: 100 + cos(hue * 2 * .pi) * 80 * saturation,
-                                y: 100 + sin(hue * 2 * .pi) * 80 * saturation
-                            )
-                    }
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                let center = CGPoint(x: 100, y: 100)
-                                let deltaX = value.location.x - center.x
-                                let deltaY = value.location.y - center.y
-                                
-                                // Calculate hue from angle
-                                let angle = atan2(deltaY, deltaX)
-                                hue = (angle + .pi) / (2 * .pi)
-                                
-                                // Calculate saturation from distance
-                                let distance = sqrt(deltaX * deltaX + deltaY * deltaY)
-                                saturation = min(distance / 80, 1.0)
-                                
-                                updateSelectedColor()
-                            }
-                    )
-                }
-                
-                // Brightness slider
-                VStack(spacing: 8) {
-                    Text("Brightness")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    HStack {
-                        Image(systemName: "sun.min")
+                    // Current color preview
+                    VStack(spacing: 8) {
+                        Text("Selected Color")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                         
-                        Slider(value: $brightness, in: 0...1) { _ in
-                            updateSelectedColor()
-                        }
-                        .accentColor(.orange)
-                        
-                        Image(systemName: "sun.max")
-                            .foregroundColor(.secondary)
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(selectedColor)
+                            .frame(width: 60, height: 60)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                            )
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 24)
                 
-                Spacer()
+                // Color grid - full spectrum
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 12), spacing: 2) {
+                        ForEach(0..<144, id: \.self) { index in
+                            let hue = Double(index % 12) / 12.0
+                            let saturation = 0.3 + (Double(index / 12) / 12.0) * 0.7
+                            let brightness = 0.3 + (Double(index / 12) / 12.0) * 0.7
+                            let color = Color(hue: hue, saturation: saturation, brightness: brightness)
+                            
+                            Button(action: {
+                                selectedColor = color
+                            }) {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(color)
+                                    .frame(height: 40)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(selectedColor == color ? Color.blue : Color.clear, lineWidth: 3)
+                                    )
+                                    .shadow(color: selectedColor == color ? Color.blue.opacity(0.3) : Color.clear, radius: 2, x: 0, y: 1)
+                            }
+                            .buttonStyle(.plain)
+                            .scaleEffect(selectedColor == color ? 1.05 : 1.0)
+                            .animation(.easeInOut(duration: 0.15), value: selectedColor)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
                 
                 // Action buttons
-                HStack(spacing: 16) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    Button("Apply") {
+                VStack(spacing: 12) {
+                    Button("Apply Color") {
                         onColorSelected(selectedColor)
                         dismiss()
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
                 }
-                .padding(.bottom)
+                .padding(.horizontal)
+                .padding(.vertical, 20)
             }
             .navigationBarTitleDisplayMode(.inline)
-            .onAppear {
-                // Initialize sliders from current color
-                let uiColor = UIColor(selectedColor)
-                var h: CGFloat = 0, s: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-                uiColor.getHue(&h, saturation: &s, brightness: &b, alpha: &a)
-                
-                hue = Double(h)
-                saturation = Double(s)
-                brightness = Double(b)
-            }
+            .navigationBarHidden(true)
         }
-    }
-    
-    private func updateSelectedColor() {
-        selectedColor = Color(hue: hue, saturation: saturation, brightness: brightness)
     }
 }
 

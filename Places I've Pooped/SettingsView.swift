@@ -10,7 +10,6 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var auth: AuthManager
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
-    @AppStorage("overrideSystemAppearance") private var overrideSystemAppearance: Bool = false
     @StateObject private var notificationManager = NotificationManager()
     
     @State private var newUsername = ""
@@ -23,25 +22,12 @@ struct SettingsView: View {
             List {
                 // App Settings Section
                 Section("App Settings") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "moon.fill")
-                                .foregroundColor(.purple)
-                            Text("Override System Appearance")
-                            Spacer()
-                            Toggle("", isOn: $overrideSystemAppearance)
-                        }
-                        
-                        if overrideSystemAppearance {
-                            HStack {
-                                Image(systemName: "moon.circle.fill")
-                                    .foregroundColor(.blue)
-                                Text("Dark Mode")
-                                Spacer()
-                                Toggle("", isOn: $isDarkMode)
-                            }
-                            .padding(.leading, 20)
-                        }
+                    HStack {
+                        Image(systemName: "moon.fill")
+                            .foregroundColor(.purple)
+                        Text("Dark Mode")
+                        Spacer()
+                        Toggle("", isOn: $isDarkMode)
                     }
                     
                     HStack {
@@ -99,7 +85,7 @@ struct SettingsView: View {
                                 .foregroundColor(.green)
                             Text("Privacy Policy")
                             Spacer()
-                            Image(systemName: "arrow.up.right.square")
+                            Image(systemName: "chevron.right")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -115,7 +101,7 @@ struct SettingsView: View {
                                 .foregroundColor(.orange)
                             Text("Terms of Service")
                             Spacer()
-                            Image(systemName: "arrow.up.right.square")
+                            Image(systemName: "chevron.right")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -129,148 +115,173 @@ struct SettingsView: View {
                             .foregroundColor(.blue)
                         Text("Version")
                         Spacer()
-                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0")
+                        Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
                             .foregroundColor(.secondary)
                     }
                 }
             }
             .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
             }
         }
-        .alert("Change Username", isPresented: $showChangeUsername) {
-            TextField("New username", text: $newUsername)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-            
-            Button("Cancel", role: .cancel) {
-                newUsername = ""
-                usernameError = nil
-            }
-            
-            Button("Update") {
-                updateUsername()
-            }
-            .disabled(newUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        } message: {
-            if let error = usernameError {
-                Text(error)
-            } else {
-                Text("Enter a new username for your account.")
-            }
+        .sheet(isPresented: $showChangeUsername) {
+            ChangeUsernameSheet(
+                newUsername: $newUsername,
+                isUpdating: $isUpdatingUsername,
+                error: $usernameError,
+                onUpdate: updateUsername
+            )
         }
     }
     
     private func updateUsername() {
-        let trimmedUsername = newUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedUsername.isEmpty else { return }
-        
-        isUpdatingUsername = true
-        usernameError = nil
-        
-        // Validate username
-        let usernameValidation = PasswordUtils.validateUsername(trimmedUsername)
-        guard usernameValidation.isValid else {
-            usernameError = usernameValidation.errorMessage ?? "Invalid username"
-            isUpdatingUsername = false
+        guard !newUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            usernameError = "Username cannot be empty"
             return
         }
         
-        // Check if username already exists
-        let usernamePredicate = NSPredicate(format: "username_lc == %@", trimmedUsername.lowercased())
-        let usernameQuery = CKQuery(recordType: "User", predicate: usernamePredicate)
+        let trimmedUsername = newUsername.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        CKEnv.publicDB.fetch(withQuery: usernameQuery, inZoneWith: nil, desiredKeys: nil, resultsLimit: CKQueryOperation.maximumResults) { result in
-            switch result {
-            case .success(let queryResult):
-                let records = queryResult.matchResults.compactMap { _, recordResult in
-                    switch recordResult {
-                    case .success(let record):
-                        return record
-                    case .failure:
-                        return nil
-                    }
-                }
-                DispatchQueue.main.async {
-                    // Check if username is taken by someone else
-                    if !records.isEmpty {
-                        let existingUser = records.first
-                        let existingUserID = existingUser?["userID"] as? String ?? existingUser?.recordID.recordName
-                        
-                        // Allow if it's the same user
-                        if existingUserID != auth.currentUserRecordID?.recordName {
-                            usernameError = "This username is already taken. Please choose a different one."
-                            isUpdatingUsername = false
-                            return
-                        }
+        // Check if username is already taken
+        let predicate = NSPredicate(format: "name_lc == %@", trimmedUsername.lowercased())
+        let query = CKQuery(recordType: "User", predicate: predicate)
+        
+        CKEnv.publicDB.fetch(withQuery: query, inZoneWith: nil, desiredKeys: nil, resultsLimit: 1) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let (results, _)):
+                    if !results.isEmpty {
+                        usernameError = "Username is already taken"
+                        return
                     }
                     
-                    // Update the username
+                    // Username is available, proceed with update
                     updateUsernameInCloudKit(trimmedUsername)
-                }
-            case .failure(let error):
-                DispatchQueue.main.async {
-                    usernameError = "Network error: \(error.localizedDescription)"
-                    isUpdatingUsername = false
+                    
+                case .failure(let error):
+                    print("❌ Error checking username availability: \(error.localizedDescription)")
+                    usernameError = "Failed to check username availability"
                 }
             }
         }
     }
     
-    func updateUsernameInCloudKit(_ newUsername: String) {
-        guard let userRecordID = auth.currentUserRecordID else {
-            usernameError = "User record not found"
+    private func updateUsernameInCloudKit(_ newUsername: String) {
+        isUpdatingUsername = true
+        usernameError = nil
+        
+        // Update local auth manager
+        auth.currentUserName = newUsername
+        UserDefaults.standard.set(newUsername, forKey: "auth.user.name")
+        
+        // Update CloudKit record
+        guard let userID = auth.currentUserRecordID?.recordName else {
             isUpdatingUsername = false
+            usernameError = "User record not found"
             return
         }
+        let predicate = NSPredicate(format: "userID == %@", userID)
+        let query = CKQuery(recordType: "User", predicate: predicate)
         
-        let recordID = CKRecord.ID(recordName: userRecordID.recordName)
-        CKEnv.publicDB.fetch(withRecordID: recordID) { record, error in
+        CKEnv.publicDB.fetch(withQuery: query, inZoneWith: nil, desiredKeys: nil, resultsLimit: 1) { result in
             DispatchQueue.main.async {
-                if let error = error {
-                    usernameError = "Failed to fetch user record: \(error.localizedDescription)"
-                    isUpdatingUsername = false
-                    return
-                }
-                
-                guard let record = record else {
-                    usernameError = "User record not found"
-                    isUpdatingUsername = false
-                    return
-                }
-                
-                // Update the username fields
-                record["username"] = newUsername as CKRecordValue
-                record["username_lc"] = newUsername.lowercased() as CKRecordValue
-                
-                CKEnv.publicDB.save(record) { savedRecord, saveError in
-                    DispatchQueue.main.async {
-                        if let saveError = saveError {
-                            usernameError = "Failed to update username: \(saveError.localizedDescription)"
+                switch result {
+                case .success(let (results, _)):
+                    if let record = results.first?.1 {
+                        switch record {
+                        case .success(let userRecord):
+                            userRecord["name"] = newUsername as CKRecordValue
+                            userRecord["name_lc"] = newUsername.lowercased() as CKRecordValue
+                            
+                            CKEnv.publicDB.save(userRecord) { _, error in
+                                DispatchQueue.main.async {
+                                    isUpdatingUsername = false
+                                    if let error = error {
+                                        print("❌ Error updating username in CloudKit: \(error.localizedDescription)")
+                                        usernameError = "Failed to update username"
+                                    } else {
+                                        print("✅ Username updated successfully in CloudKit")
+                                        showChangeUsername = false
+                                    }
+                                }
+                            }
+                            
+                        case .failure(let error):
                             isUpdatingUsername = false
-                            return
+                            print("❌ Error accessing user record: \(error.localizedDescription)")
+                            usernameError = "Failed to access user record"
                         }
-                        
-                        // Update local state
-                        auth.currentUserName = newUsername
-                        UserDefaults.standard.set(newUsername, forKey: "auth.displayName")
-                        
-                        // Close the alert and reset state
-                        showChangeUsername = false
+                    } else {
                         isUpdatingUsername = false
-                        self.newUsername = ""
-                        usernameError = nil
-                        
-                        print("✅ Username updated successfully to: \(newUsername)")
+                        usernameError = "User record not found"
                     }
+                    
+                case .failure(let error):
+                    isUpdatingUsername = false
+                    print("❌ Error fetching user record: \(error.localizedDescription)")
+                    usernameError = "Failed to fetch user record"
                 }
             }
+        }
+    }
+}
+
+struct ChangeUsernameSheet: View {
+    @Binding var newUsername: String
+    @Binding var isUpdating: Bool
+    @Binding var error: String?
+    let onUpdate: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Change Username")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("New Username")
+                        .font(.headline)
+                    
+                    TextField("Enter new username", text: $newUsername)
+                        .textFieldStyle(.roundedBorder)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                    
+                    if let error = error {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(spacing: 12) {
+                    Button("Update Username") {
+                        onUpdate()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .disabled(isUpdating || newUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarHidden(true)
         }
     }
 }

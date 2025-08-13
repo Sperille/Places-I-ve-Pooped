@@ -9,7 +9,6 @@ import SwiftUI
 struct PlacesIvePoopedApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @AppStorage("isDarkMode") private var isDarkMode: Bool = false
-    @AppStorage("overrideSystemAppearance") private var overrideSystemAppearance: Bool = false
     @StateObject private var auth            = AuthManager()
     @StateObject private var menuState       = MenuState()
     @StateObject private var sessionManager  = SessionManager()
@@ -31,9 +30,6 @@ struct PlacesIvePoopedApp: App {
             .onChange(of: isDarkMode) { _, _ in
                 updateAppearance()
             }
-            .onChange(of: overrideSystemAppearance) { _, _ in
-                updateAppearance()
-            }
             // Provide environment objects
             .environmentObject(auth)
             .environmentObject(menuState)
@@ -50,13 +46,7 @@ struct PlacesIvePoopedApp: App {
     private func updateAppearance() {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             windowScene.windows.forEach { window in
-                if overrideSystemAppearance {
-                    // User has chosen to override system preference
-                    window.overrideUserInterfaceStyle = isDarkMode ? .dark : .light
-                } else {
-                    // Follow system preference
-                    window.overrideUserInterfaceStyle = .unspecified
-                }
+                window.overrideUserInterfaceStyle = isDarkMode ? .dark : .light
             }
         }
     }
