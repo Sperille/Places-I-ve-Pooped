@@ -70,7 +70,14 @@ struct AddFriendView: View {
             .padding()
             .navigationTitle("Add Friend")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
+            .toolbar { 
+                ToolbarItem(placement: .topBarLeading) { 
+                    Button("Close") { 
+                        dismiss() 
+                    }
+                    .foregroundColor(.red)
+                } 
+            }
         }
     }
 

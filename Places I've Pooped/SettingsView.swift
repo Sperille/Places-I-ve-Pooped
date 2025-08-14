@@ -242,10 +242,6 @@ struct ChangeUsernameSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                Text("Change Username")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                
                 VStack(alignment: .leading, spacing: 8) {
                     Text("New Username")
                         .font(.headline)
@@ -263,25 +259,25 @@ struct ChangeUsernameSheet: View {
                 }
                 
                 Spacer()
-                
-                VStack(spacing: 12) {
-                    Button("Update Username") {
-                        onUpdate()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-                    .disabled(isUpdating || newUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    
+            }
+            .padding()
+            .navigationTitle("Change Username")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
+                    .disabled(isUpdating)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Update") {
+                        onUpdate()
+                    }
+                    .disabled(isUpdating || newUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .padding()
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarHidden(true)
         }
     }
 }

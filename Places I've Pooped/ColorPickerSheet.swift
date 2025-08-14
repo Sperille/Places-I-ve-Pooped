@@ -38,34 +38,15 @@ struct ColorPickerSheet: View {
                 .padding(.horizontal)
                 .padding(.bottom, 24)
                 
-                // Color grid - full spectrum
-                ScrollView {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 12), spacing: 2) {
-                        ForEach(0..<144, id: \.self) { index in
-                            let hue = Double(index % 12) / 12.0
-                            let saturation = 0.3 + (Double(index / 12) / 12.0) * 0.7
-                            let brightness = 0.3 + (Double(index / 12) / 12.0) * 0.7
-                            let color = Color(hue: hue, saturation: saturation, brightness: brightness)
-                            
-                            Button(action: {
-                                selectedColor = color
-                            }) {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(color)
-                                    .frame(height: 40)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(selectedColor == color ? Color.blue : Color.clear, lineWidth: 3)
-                                    )
-                                    .shadow(color: selectedColor == color ? Color.blue.opacity(0.3) : Color.clear, radius: 2, x: 0, y: 1)
-                            }
-                            .buttonStyle(.plain)
-                            .scaleEffect(selectedColor == color ? 1.05 : 1.0)
-                            .animation(.easeInOut(duration: 0.15), value: selectedColor)
-                        }
-                    }
-                    .padding(.horizontal)
+                // Apple's native ColorPicker
+                VStack(spacing: 20) {
+                    ColorPicker("Select Color", selection: $selectedColor, supportsOpacity: false)
+                        .labelsHidden()
+                        .scaleEffect(1.2)
                 }
+                .padding(.horizontal)
+                
+                Spacer()
                 
                 // Action buttons
                 VStack(spacing: 12) {

@@ -81,39 +81,6 @@ struct LogPoopView: View {
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
 
-                // Photo Picker
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Add Photo (Optional)")
-                        .font(.headline)
-                    
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        if let selectedImageData,
-                           let uiImage = UIImage(data: selectedImageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 200)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                        } else {
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray5))
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 200)
-                                .overlay(
-                                    VStack {
-                                        Image(systemName: "camera.fill")
-                                            .font(.largeTitle)
-                                            .foregroundColor(.secondary)
-                                        Text("Tap to add photo")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                )
-                        }
-                    }
-                }
-
                 // Comment Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Comment (Optional)")
@@ -144,6 +111,40 @@ struct LogPoopView: View {
                                     }
                                 }
                             }
+                    }
+                }
+
+                // Photo Picker
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Add Photo (Optional)")
+                        .font(.headline)
+                    
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        if let selectedImageData,
+                           let uiImage = UIImage(data: selectedImageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 200)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemGray5))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: .infinity)
+                                .frame(height: 200)
+                                .overlay(
+                                    VStack {
+                                        Image(systemName: "camera.fill")
+                                            .font(.largeTitle)
+                                            .foregroundColor(.secondary)
+                                        Text("Tap to add photo")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                )
+                        }
                     }
                 }
 

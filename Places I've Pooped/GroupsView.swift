@@ -34,91 +34,111 @@ struct GroupsView: View {
         @Binding var isDeleting: Bool
         
         var body: some View {
-            List {
-                // Group Info Section
-                Section("Group Info") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(groupsManager.currentGroupName ?? "Your Group")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.vertical, 2)
-                }
-                
-                // Current user's color editing section
-                if let userID = auth.currentUserRecordID?.recordName,
-                   let currentMember = groupsManager.members.first(where: { $0.userID == userID }) {
-                    Section("Your Color") {
-                        HStack {
-                            Circle()
-                                .fill(currentMember.color)
-                                .frame(width: 24, height: 24)
-                            
-                            Text("Map Pin Color")
-                                .font(.subheadline)
-                            
-                            Spacer()
-                            
-                            Button("Change") {
-                                selectedColor = currentMember.color
-                                showColorPicker = true
-                            }
-                            .font(.subheadline)
-                            .foregroundColor(.blue)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Group Info Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Group Info").font(.headline)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(groupsManager.currentGroupName ?? "Your Group")
+                                .font(.title2)
+                                .fontWeight(.bold)
                         }
-                        .padding(.vertical, 2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
                     }
-                }
-                
-                // Group Statistics
-                if let groupID = groupsManager.currentGroupID {
-                    let groupPins = poopManager.poopPins.filter { $0.groupID == groupID }
-                    Section {
-                        HStack(spacing: 12) {
-                            StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
-                            StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
-                            StatCard(title: "Poops This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
-                        }
-                        .padding(.horizontal)
-                    } header: {
-                        Text("Group Statistics")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .textCase(nil)
-                            .frame(maxWidth: .infinity, alignment: .center)
-                    }
-                }
-
-                // Members list with friend functionality
-                if !groupsManager.members.isEmpty {
-                    Section("Members") {
-                        ForEach(groupsManager.members) { member in
-                            GroupMemberRowWithFriend(member: member, userManager: userManager)
-                        }
-                    }
-                }
-
-                // Group Actions
-                Section {
-                    Button(role: .destructive) {
-                        showLeaveConfirm = true
-                    } label: {
-                        HStack {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 16, weight: .medium))
-                            Text("Leave Group")
-                                .font(.system(size: 16, weight: .medium))
-                            Spacer()
-                        }
-                        .foregroundColor(.red)
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.plain)
                     
+                    // Current user's color editing section
+                    if let userID = auth.currentUserRecordID?.recordName,
+                       let currentMember = groupsManager.members.first(where: { $0.userID == userID }) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your Color").font(.headline)
+                            HStack {
+                                Circle()
+                                    .fill(currentMember.color)
+                                    .frame(width: 24, height: 24)
+                                
+                                Text("Map Pin Color")
+                                    .font(.subheadline)
+                                
+                                Spacer()
+                                
+                                Button("Change") {
+                                    selectedColor = currentMember.color
+                                    showColorPicker = true
+                                }
+                                .font(.subheadline)
+                                .foregroundColor(.blue)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                    }
+                    
+                    // Group Statistics
+                    if let groupID = groupsManager.currentGroupID {
+                        let groupPins = poopManager.poopPins.filter { $0.groupID == groupID }
+                        VStack(alignment: .center, spacing: 12) {
+                            Text("Group Statistics").font(.headline)
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 16) {
+                                StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
+                                StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
+                                StatCard(title: "Poops This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                    }
 
+                    // Members list with friend functionality
+                    if !groupsManager.members.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Members").font(.headline)
+                            VStack(spacing: 8) {
+                                ForEach(groupsManager.members) { member in
+                                    GroupMemberRowWithFriend(member: member, userManager: userManager)
+                                }
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding()
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                        }
+                    }
+
+                    // Group Actions
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button(role: .destructive) {
+                            showLeaveConfirm = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "rectangle.portrait.and.arrow.right")
+                                    .font(.system(size: 16, weight: .medium))
+                                Text("Leave Group")
+                                    .font(.system(size: 16, weight: .medium))
+                                Spacer()
+                            }
+                            .foregroundColor(.red)
+                            .padding(.vertical, 4)
+                        }
+                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
                 }
+                .padding(.horizontal, 16)
             }
-            .listStyle(.insetGrouped)
         }
     }
     
@@ -193,10 +213,34 @@ struct GroupsView: View {
                 .environmentObject(groupsManager)
         }
         .sheet(isPresented: $showColorPicker) {
-            ColorPickerSheet(selectedColor: $selectedColor) { newColor in
-                if let currentUserID = auth.currentUserRecordID?.recordName,
-                   let groupID = groupsManager.currentGroupID {
-                    groupsManager.updateMemberColor(groupID: groupID, userID: currentUserID, newColor: newColor)
+            NavigationView {
+                VStack(spacing: 20) {
+                    Text("Choose Your Color")
+                        .font(.headline)
+                    
+                    ColorPicker("Pin Color", selection: $selectedColor, supportsOpacity: false)
+                        .padding()
+                    
+                    Rectangle()
+                        .fill(selectedColor)
+                        .frame(height: 60)
+                        .cornerRadius(12)
+                    
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("Pick Color")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            if let currentUserID = auth.currentUserRecordID?.recordName,
+                               let groupID = groupsManager.currentGroupID {
+                                groupsManager.updateMemberColor(groupID: groupID, userID: currentUserID, newColor: selectedColor)
+                            }
+                            showColorPicker = false
+                        }
+                    }
                 }
             }
         }
@@ -251,13 +295,8 @@ private struct GroupMemberRowWithFriend: View {
                 .fill(member.color)
                 .frame(width: 32, height: 32)
             
-            VStack(alignment: .leading, spacing: 2) {
-                Text(member.name)
-                    .font(.body)
-                Text("Joined \(member.joinedAt, style: .relative)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(member.name)
+                .font(.body)
             
             Spacer()
             
@@ -368,7 +407,7 @@ private struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.secondarySystemBackground))
+        .background(Color(.systemGray6))
         .cornerRadius(12)
     }
 }

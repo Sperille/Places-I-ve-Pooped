@@ -119,14 +119,20 @@ struct PoopDetailView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(Color.brown.opacity(0.3), lineWidth: 1)
                             )
+                            .toolbar {
+                                ToolbarItemGroup(placement: .keyboard) {
+                                    Spacer()
+                                    Button("Done") {
+                                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                    }
+                                }
+                            }
                         
-                        HStack {
-                            Spacer()
-                            Button("Post Comment") { addCommentTapped() }
-                                .buttonStyle(.borderedProminent)
-                                .tint(.brown)
-                                .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                        }
+                        Button("Post Comment") { addCommentTapped() }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.brown)
+                            .disabled(newCommentText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            .frame(maxWidth: .infinity)
                     }
                 }
             }
