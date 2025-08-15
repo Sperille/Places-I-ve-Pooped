@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "PIP-Icon-NoAlpha.jpg",
+      "filename" : "PIP-Icon-No-Transparency.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "PIP-Icon-NoAlpha 1.jpg",
+      "filename" : "PIP-Icon-No-Transparency 1.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "PIP-Icon-NoAlpha 2.jpg",
+      "filename" : "PIP-Icon-No-Transparency 2.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
