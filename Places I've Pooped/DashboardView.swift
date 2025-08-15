@@ -70,8 +70,24 @@ struct DashboardView: View {
         print("🔍 Dashboard filtering - Friend IDs: \(friendIDs)")
         print("🔍 Dashboard filtering - Total poops: \(poopManager.poopPins.count)")
         
+        // Simulator debug info
+        #if targetEnvironment(simulator)
+        print("🖥️ Simulator Debug:")
+        print("  - PoopManager poopPins count: \(poopManager.poopPins.count)")
+        print("  - PoopManager poopPins: \(poopManager.poopPins.map { "\($0.userName) (\($0.id))" })")
+        print("  - GroupsManager currentGroupID: \(groupsManager.currentGroupID ?? "nil")")
+        print("  - UserManager friends count: \(userManager.friends.count)")
+        #endif
+        
         // Filter poopPins based on current user, group, and friends
         let filteredPins = poopManager.poopPins.filter { pin in
+            print("🔍 Checking poop: \(pin.id) by \(pin.userName)")
+            print("  - Pin userID: \(pin.userID)")
+            print("  - Pin groupID: \(pin.groupID ?? "nil")")
+            print("  - Current userID: \(uid ?? "nil")")
+            print("  - Current groupID: \(gid ?? "nil")")
+            print("  - Friend IDs: \(friendIDs)")
+            
             // Show user's own poops
             if pin.userID == uid { 
                 print("✅ Showing own poop: \(pin.id)")

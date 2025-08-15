@@ -92,8 +92,9 @@ struct GroupsView: View {
                             ], spacing: 16) {
                                 StatCard(title: "Total Poops", value: "\(groupPins.count)", icon: "number.circle.fill")
                                 StatCard(title: "Avg Rating", value: String(format: "%.1f", calculateAverageRating(from: groupPins)), icon: "star.fill")
-                                StatCard(title: "Poops This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
+                                StatCard(title: "This Week", value: "\(calculatePoopsThisWeek(from: groupPins))", icon: "calendar.circle.fill")
                             }
+                            .padding(.horizontal)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -468,5 +469,3 @@ private struct LeaderboardEntry {
     let value: String
     let color: Color
 }
-
-

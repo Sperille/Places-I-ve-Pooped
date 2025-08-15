@@ -29,6 +29,53 @@ final class PoopManager: ObservableObject {
     private let localPinsKey = "PoopManager.localPins"
 
     init() { 
+        // Simulator bypass for testing
+        #if targetEnvironment(simulator)
+        print("🖥️ Simulator: Setting up test poop data")
+        print("🖥️ Simulator: Creating test poops...")
+        self.poopPins = [
+            PoopPin(
+                id: "simulator-poop-1",
+                userID: "simulator-user",
+                groupID: "simulator-test-group",
+                coordinate: CLLocationCoordinate2D(latitude: 41.8781, longitude: -87.6298), // Chicago
+                tpRating: 4,
+                cleanliness: 3,
+                privacy: 5,
+                plumbing: 4,
+                overallVibes: 4,
+                comment: "Test poop from simulator",
+                userColor: .red,
+                userName: "Simulator User",
+                locationDescription: "Chicago, IL",
+                createdAt: Date().addingTimeInterval(-3600), // 1 hour ago
+                photoURL: nil
+            ),
+            PoopPin(
+                id: "virginia-friend-poop-1",
+                userID: "virginia-friend",
+                groupID: "simulator-test-group",
+                coordinate: CLLocationCoordinate2D(latitude: 42.1539, longitude: -88.1362), // Barrington, IL
+                tpRating: 3,
+                cleanliness: 4,
+                privacy: 3,
+                plumbing: 5,
+                overallVibes: 4,
+                comment: "Test poop from Virginia friend",
+                userColor: .blue,
+                userName: "Virginia Friend",
+                locationDescription: "Barrington, IL",
+                createdAt: Date().addingTimeInterval(-7200), // 2 hours ago
+                photoURL: nil
+            )
+        ]
+        print("🖥️ Simulator: Created \(self.poopPins.count) test poops")
+        print("🖥️ Simulator: Poop IDs: \(self.poopPins.map { $0.id })")
+        
+        // Don't fetch from CloudKit in simulator
+        return
+        #endif
+        
         startNetworkMonitor()
         
         // Listen for user color changes to refresh pins
@@ -54,6 +101,12 @@ final class PoopManager: ObservableObject {
     // MARK: - Pins
 
     func fetchPoopPins() {
+        // Simulator bypass - don't fetch from CloudKit in simulator
+        #if targetEnvironment(simulator)
+        print("🖥️ Simulator: Skipping CloudKit fetch, using test data")
+        return
+        #endif
+        
         print("🔍 fetchPoopPins: Starting fetch...")
         // Query both PoopPin and Poop record types to handle both schemas
         let recordTypes = ["PoopPin", "Poop"]
@@ -95,6 +148,13 @@ final class PoopManager: ObservableObject {
         
         group.notify(queue: .main) { [weak self] in
             guard let self else { return }
+            
+            // Simulator bypass - don't overwrite test data
+            #if targetEnvironment(simulator)
+            print("🖥️ Simulator: Keeping existing test data, not overwriting with CloudKit results")
+            return
+            #endif
+            
             // De-dupe by recordName and sort newest-first
             let unique = Dictionary(gathered.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
             let sorted = unique.values.sorted(by: { $0.createdAt > $1.createdAt })

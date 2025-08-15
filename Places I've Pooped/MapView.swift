@@ -22,6 +22,7 @@ struct MapView: View {
 
             // Poop pins: Apple-style pin, dynamic color, no label
             ForEach(poopManager.poopPins) { pin in
+                let _ = print("🗺️ Map showing poop: \(pin.id) by \(pin.userName) (groupID: \(pin.groupID ?? "nil"))")
                 Annotation("", coordinate: pin.coordinate) { // empty title => no callout label
                     ZStack {
                         // Outer circle with user color

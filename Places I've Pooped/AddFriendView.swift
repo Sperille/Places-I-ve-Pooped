@@ -42,42 +42,69 @@ struct AddFriendView: View {
                     ProgressView("Searching…").frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                List {
-                    ForEach(results) { user in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("@\(user.username)").font(.body.weight(.semibold))
-                                if let display = user.displayName, !display.isEmpty {
-                                    Text(display).font(.caption).foregroundStyle(.secondary)
+                // Search Results
+                if !results.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Search Results")
+                            .font(.headline)
+                            .padding(.horizontal)
+                        
+                        List {
+                            ForEach(results) { user in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("@\(user.username)").font(.body.weight(.semibold))
+                                        if let display = user.displayName, !display.isEmpty {
+                                            Text(display).font(.caption).foregroundStyle(.secondary)
+                                        }
+                                    }
+                                    Spacer()
+                                    Button {
+                                        addFriend(user: user) // byCode under the hood
+                                    } label: {
+                                        if addingUsername == user.username { ProgressView() }
+                                        else { Text("Add").fontWeight(.semibold) }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(addingUsername != nil)
                                 }
                             }
-                            Spacer()
-                            Button {
-                                addFriend(user: user) // byCode under the hood
-                            } label: {
-                                if addingUsername == user.username { ProgressView() }
-                                else { Text("Add").fontWeight(.semibold) }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(addingUsername != nil)
                         }
+                        .listStyle(.plain)
                     }
                 }
-                .listStyle(.plain)
+                
+                // Current Friends List
+                if !userManager.friends.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Your Friends")
+                            .font(.headline)
+                            .padding(.horizontal)
+                        
+                        List {
+                            ForEach(userManager.friends) { friend in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(friend.name)
+                                            .font(.body.weight(.semibold))
+                                        Text("Friend")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                }
+                            }
+                        }
+                        .listStyle(.plain)
+                    }
+                }
 
                 Spacer(minLength: 0)
             }
             .padding()
             .navigationTitle("Add Friend")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { 
-                ToolbarItem(placement: .topBarLeading) { 
-                    Button("Close") { 
-                        dismiss() 
-                    }
-                    .foregroundColor(.red)
-                } 
-            }
+
         }
     }
 

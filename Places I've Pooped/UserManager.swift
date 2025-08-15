@@ -19,6 +19,19 @@ class UserManager: ObservableObject {
     @Published var currentUserID: String?
     @Published var currentUserName: String?
     @Published var friends: [Friend] = []
+    
+    init() {
+        // Simulator bypass for testing
+        #if targetEnvironment(simulator)
+        print("🖥️ Simulator: Setting up test user data")
+        self.currentUserID = "simulator-user"
+        self.currentUserName = "Simulator User"
+        self.friends = [
+            Friend(id: "virginia-friend", name: "Virginia Friend")
+        ]
+        return
+        #endif
+    }
 
     // MARK: - Login with email/password
     func login(email: String, password: String, completion: @escaping (Bool, String?) -> Void) {

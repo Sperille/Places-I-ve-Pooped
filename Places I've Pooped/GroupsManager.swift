@@ -29,6 +29,18 @@ final class GroupsManager: ObservableObject {
     }
 
     init() {
+        // Simulator bypass for testing
+        #if targetEnvironment(simulator)
+        print("🖥️ Simulator: Setting up test group data")
+        self.currentGroupID = "simulator-test-group"
+        self.currentGroupName = "Up Dog"
+        self.members = [
+            GroupMember(id: "1", userID: "simulator-user", name: "Simulator User", color: .red, joinedAt: Date()),
+            GroupMember(id: "2", userID: "virginia-friend", name: "Virginia Friend", color: .blue, joinedAt: Date())
+        ]
+        return
+        #endif
+        
         // Restore persisted group selection
         let d = UserDefaults.standard
         self.currentGroupID = d.string(forKey: kGroupIDKey)
